@@ -1,0 +1,451 @@
+{
+  "series": "enzo",
+  "episode": 1,
+  "title": "37 euros",
+  "format": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "timing": {
+    "lead_in": 0.1,
+    "tail": 0.25
+  },
+  "shots": [
+    {
+      "id": 1,
+      "image": "images/plan01.jpg",
+      "voice": "audio/voix01.mp3",
+      "voice_text": "Le jour de mes 18 ans, j’avais 37 euros en poche.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.25
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.45
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.3,
+          "fade_in": 0.5,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Slow, subtle push-in on Enzo's face, lit only by the flickering flame of the small candle in the foreground. He blinks slowly, his half-smile fades into a thoughtful look, and he exhales softly so the candle flame flickers.",
+        "resolution": "360p"
+      }
+    },
+    {
+      "id": 2,
+      "image": "images/plan02.jpg",
+      "voice": "audio/voix02.mp3",
+      "voice_text": "Mon père ne peut plus bosser depuis son accident. Ma mère enchaîne les nuits à l’hôpital.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.15
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.45,
+            0.5
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.0,
+          "fade_in": 0.0,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Nobody speaks. The father, seated, rests his hand on the table and exhales tiredly. The mother, standing near the fridge in her scrubs, shifts the strap of her bag on her shoulder and glances toward the door, ready to leave for her night shift. Enzo slowly uncrosses his arms and looks down at the table. Jade swings her feet under her chair. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 3,
+      "image": "images/plan03.jpg",
+      "voice": "audio/voix03.mp3",
+      "voice_text": "Et Jade, ma petite sœur, est persuadée que je vais devenir millionnaire.",
+      "camera": {
+        "zoom": [
+          1.2,
+          1.2
+        ],
+        "center": [
+          [
+            0.42,
+            0.5
+          ],
+          [
+            0.58,
+            0.5
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.0,
+          "fade_in": 0.0,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Jade, smiling proudly, slides a blank handmade birthday card across the table toward Enzo. Enzo takes it with both hands, looks at it, then looks up at her and breaks into a soft, touched smile with his mouth closed. The card stays completely blank: no text and no drawing appear on it. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 4,
+      "image": "images/plan04.jpg",
+      "voice": "audio/voix04.mp3",
+      "voice_text": "Cette nuit-là, je cherchais juste un chargeur.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.25
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.42,
+            0.6
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.0,
+          "fade_in": 0.0,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Enzo, crouched in front of the open drawer in the dark kitchen, rummages through it with his free hand while the narrow beam of his phone flashlight sweeps across the contents. He glances once over his shoulder toward the doorway, then turns back to the drawer. Very gentle handheld camera movement.",
+        "resolution": "360p"
+      }
+    },
+    {
+      "id": 5,
+      "image": "images/plan05.jpg",
+      "voice": "audio/voix05.mp3",
+      "voice_text": "Je suis tombé sur ça.",
+      "extra_hold": 1.0,
+      "camera": {
+        "zoom": [
+          1.0,
+          1.2
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.55
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.0,
+          "fade_in": 0.0,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Extreme close-up inside the open drawer. Enzo's fingers slowly lift the edge of the pile of papers, revealing the cream envelope hidden underneath, while the cold beam of the phone flashlight shifts slightly across the papers. All the papers and the envelope stay completely blank: no printed text. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 6,
+      "image": "images/plan06.jpg",
+      "voice": "audio/voix06.mp3",
+      "voice_text": "Trois mille quatre cents euros de loyers en retard. Ma mère le cachait depuis des mois.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.1
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.52
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "letter",
+          "text": "Retard de loyer : 3 400 €",
+          "space": "image",
+          "box": [
+            0.27,
+            0.42,
+            0.72,
+            0.54
+          ],
+          "start": 0.8,
+          "fade_in": 0.6
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "image": "images/plan07.jpg",
+      "voice": "audio/voix07.mp3",
+      "voice_text": "Le bailleur nous laisse trois mois. Après, c’est la procédure.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.2
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.43,
+            0.55
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_small",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.25,
+            0.045,
+            0.75,
+            0.1
+          ],
+          "start": 0.0,
+          "fade_in": 0.0,
+          "label": "ARGENT"
+        }
+      ],
+      "animation": {
+        "prompt": "Enzo sits on the kitchen floor against the wooden cabinets, crushed and exhausted. His shoulders rise and fall with heavy breathing; he lowers his head a little further and lets the hand holding the blank sheet of paper sink down to his knee. The lights of the tower blocks in the window flicker faintly. The phone lying on the floor keeps casting a steady cold light. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 8,
+      "image": "images/plan08.jpg",
+      "voice": "audio/voix08.mp3",
+      "voice_text": "Trente-sept euros. Il m’en manque trois mille trois cent soixante-trois.",
+      "camera": {
+        "zoom": [
+          1.0,
+          1.15
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.55
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "counter_big",
+          "text": "37 €",
+          "space": "screen",
+          "box": [
+            0.1,
+            0.05,
+            0.9,
+            0.14
+          ],
+          "start": 0.3,
+          "fade_in": 0.4,
+          "label": "ARGENT"
+        },
+        {
+          "style": "goal_big",
+          "text": "3 400 €",
+          "space": "screen",
+          "box": [
+            0.1,
+            0.14,
+            0.9,
+            0.23
+          ],
+          "start": 1.7,
+          "fade_in": 0.4,
+          "label": "OBJECTIF"
+        }
+      ],
+      "animation": {
+        "prompt": "Close-up of Enzo in the lower half of the frame, staring at the blank sheet of paper at the very bottom of the frame. His jaw tightens, his eyes narrow with determination, and he takes one slow deep breath. His head stays in the lower half of the frame; the upper half remains an empty dark blurred wall. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 9,
+      "image": "images/plan09.jpg",
+      "voice": "audio/voix09.mp3",
+      "voice_text": "Et là, mon téléphone a vibré.",
+      "extra_hold": 2.4,
+      "camera": {
+        "zoom": [
+          1.0,
+          1.2
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.58
+          ]
+        ]
+      },
+      "shake": {
+        "start": 1.9,
+        "duration": 0.8
+      },
+      "overlays": [
+        {
+          "style": "message_card",
+          "sender": "Jordan",
+          "text": "Joyeux anniv frère. Passe me voir, j’ai un plan pour toi.",
+          "space": "screen",
+          "box": [
+            0.08,
+            0.04,
+            0.92,
+            0.19
+          ],
+          "start": 2.1,
+          "fade_in": 0.3,
+          "animation": "slide_down"
+        }
+      ],
+      "animation": {
+        "prompt": "[0-1.8s] The smartphone lies still on the wooden kitchen table at night, its blank screen glowing softly, a folded blank sheet of paper next to it. [1.8-2.8s] The phone starts to buzz: it vibrates and shifts a few millimetres across the wood, its glow pulsing, and the sheet of paper trembles slightly. [2.8s-end] The vibration stops and the phone settles. The screen stays blank: no text, no icons, no notification. The camera stays almost locked off, with at most a very slight drift: no zoom and no push-in. The empty dark space at the top of the frame stays empty and unchanged.",
+        "resolution": "720p"
+      }
+    },
+    {
+      "id": 10,
+      "image": "images/plan10.jpg",
+      "voice_text": null,
+      "duration": 3.0,
+      "camera": {
+        "zoom": [
+          1.0,
+          1.15
+        ],
+        "center": [
+          [
+            0.5,
+            0.5
+          ],
+          [
+            0.5,
+            0.52
+          ]
+        ]
+      },
+      "overlays": [
+        {
+          "style": "to_be_continued",
+          "text": "À suivre",
+          "space": "screen",
+          "box": [
+            0.15,
+            0.08,
+            0.85,
+            0.22
+          ],
+          "start": 0.5,
+          "fade_in": 0.6
+        }
+      ],
+      "animation": {
+        "prompt": "Close-up on Enzo's face lit from below by the cold glow of a phone screen out of frame. His eyes move slowly across the screen, he swallows, his eyebrows draw together in hesitation, and his lips press tighter. Very slow push-in.",
+        "resolution": "360p"
+      }
+    }
+  ]
+}
