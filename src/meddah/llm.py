@@ -1,4 +1,6 @@
 from datetime import date
+from dataclasses import dataclass
+import time
 
 from google import genai
 
@@ -17,6 +19,29 @@ PRIX = {
         (date.max, 4.00, 20.00),
     ],
 }
+
+@dataclass(frozen=True)
+class Reponse:
+    texte: str | None
+    modele: str
+    niveau: str
+    tokens_entree: int
+    tokens_sortie: int
+    tokens_reflexion: int
+    cout: float
+    duree_s: float
+
+    @property
+    def tokens_total(self) -> int:
+        return self.tokens_entree + self.tokens_sortie + self.tokens_reflexion
+
+    def resume(self) -> str:
+        return (
+            f"[{self.modele} {self.niveau}] entree={self.tokens_entree} "
+            f"sortie={self.tokens_sortie} reflexion={self.tokens_reflexion} "
+            f"total={self.tokens_total} | cout={self.cout:.5f} $ "
+            f"| {self.duree_s:.1f} s"
+        )
 
 def tarif(modele: str, jour: date | None = None):
     jour = jour or date.today()
@@ -55,25 +80,30 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
         thinking_config=genai.types.ThinkingConfig(thinking_level=NIVEAUX_REFLEXIONS[niveau])
     )
 
+    debut = time.perf_counter()
     reponse = client.models.generate_content(
         model=MODELE,
         contents=prompt,
         config=config
     )
+    duree = time.perf_counter() - debut
 
     usage = reponse.usage_metadata
-    if usage is not None:
-        tokens_entree = usage.prompt_token_count or 0
-        tokens_sortie = usage.candidates_token_count or 0
-        tokens_reflexion = usage.thoughts_token_count or 0
-        cout = calculer_cout(tokens_entree, tokens_sortie, tokens_reflexion)
-        print(
-            f"[tokens] entree={tokens_entree} sortie={tokens_sortie} "
-            f"reflexion={tokens_reflexion} total_api={usage.total_token_count} "
-            f"| cout={cout:.5f} $ ({niveau})"
-        )
+    usage = reponse.usage_metadata
+    tokens_entree = (usage.prompt_token_count or 0) if usage else 0
+    tokens_sortie = (usage.candidates_token_count or 0) if usage else 0
+    tokens_reflexion = (usage.thoughts_token_count or 0) if usage else 0
 
-    return reponse.text
+    return Reponse(
+        texte=reponse.text,
+        modele=MODELE,
+        niveau=niveau,
+        tokens_entree=tokens_entree,
+        tokens_sortie=tokens_sortie,
+        tokens_reflexion=tokens_reflexion,
+        cout=calculer_cout(tokens_entree, tokens_sortie, tokens_reflexion),
+        duree_s=duree,
+    )
 
 
 if __name__ == "__main__":
@@ -86,9 +116,12 @@ if __name__ == "__main__":
 
     PROMPT_TEST = "Écris en une phrase l'accroche de l'épisode 2."
 
-    for niveau in ("low", "medium", "high"):
-        print(f"--- {niveau} ---")
-        print(appeler(PROMPT_TEST, system_prompt=SYSTEM_PROMPT_TEST, niveau=niveau))
-        print()
+    r = appeler(PROMPT_TEST, niveau="low")
+    print(r.texte)
+    print(r.resume())
+    print()
 
+    r = appeler(PROMPT_TEST, system_prompt=SYSTEM_PROMPT_TEST, niveau="low")
+    print(r.texte)
+    print(r.resume())
 
