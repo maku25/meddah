@@ -108,6 +108,7 @@ Fait :
 - [x] Nom du projet, bible de la série, script et production de l'épisode 1
 - [x] Production vidéo complète et validée (`meddah_production.md`)
 - [x] Dépôt GitHub privé : premier commit, puis réorganisation (production séparée des agents), bible ajoutée
+- [x] Documentation recentrée sur les agents (`docs/meddah_projet.md`, `docs/meddah_production.md`), libellés ARGENT / OBJECTIF ajoutés à la bible
 - [x] Clé Gemini créée, facturation en pré-paiement, accès à `gemini-4-argon` vérifié (appel de test : 37 jetons en entrée, 5 en sortie)
 - [x] Modèle de texte initial : Gemini 4 Argon jusqu'au 30 novembre 2026
 
@@ -124,8 +125,8 @@ Agents :
 - [ ] Après le 30 novembre : comparaison à l'aveugle des modèles (Argon, Gemini 3.8 Flash et, si on ouvre un compte Anthropic, Claude Sonnet 5.5 et Opus 5.5)
 
 Divers :
-- [ ] `docs/meddah_production.md` ajouté au dépôt et au projet
-- [ ] README du dépôt
+- [ ] README du dépôt (après le scénariste, pour avoir une vraie sortie à montrer)
+- [ ] Vérifier la licence commerciale ElevenLabs avant toute publication monétisée
 - [ ] Point sur la consommation Gemini (animation, texte)
 - [ ] Vérifier l'épisode 1 dans l'app Instagram (zones masquées par l'interface)
 - [ ] Compte Anthropic non créé ; compte Instagram professionnel à créer
@@ -150,6 +151,7 @@ Divers :
 - Problème : `pip freeze > requirements.txt` écrit en UTF-16 sous PowerShell 5.1, pip ne sait pas le relire. Solution : ne lister que les bibliothèques importées (`mutagen`, `pillow`, `google-genai`) et écrire avec `-Encoding ascii`.
 - Problème : `Set-Content -Encoding UTF8` ajoute un BOM qui empêche Python de lire un JSON. Solution : modifier `episode.json` dans VS Code.
 - Messages de commit sans accents, pour un affichage correct sous PowerShell.
+- Réorganisation faite avec `git mv` (l'historique est conservé) : modules de montage dans `src/meddah/production/`, outils ponctuels dans `production/outils/`, documents dans `docs/`. Les commandes de montage ont changé de chemin : `python src\meddah\production\montage.py`.
 
 ### Production
 Voir `meddah_production.md`.

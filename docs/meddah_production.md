@@ -1,6 +1,6 @@
 # Meddah — Production vidéo (référence)
 
-Statut : **terminé**. C'est un outil au service des agents : ne le retravailler que sur demande. Ce fichier sert de mémoire technique (commandes, réglages, pièges rencontrés).
+Statut : terminé. Cette partie est un outil au service des agents : ne la retravailler que sur demande. Ce fichier sert de mémoire technique (commandes, réglages, pièges rencontrés).
 
 ## Ce que ça fait
 À partir d'un `episode.json`, d'images et de voix, une seule commande produit la vidéo finale :
@@ -9,24 +9,24 @@ Statut : **terminé**. C'est un outil au service des agents : ne le retravailler
 python src\meddah\production\montage.py
 ```
 
-Résultat : `output/<serie>_ep<NN>_brut.mp4`. Épisode 1 : 1080×1920, 30 i/s, 48,90 s, volume -14,4 LUFS, crête -1,4 dBTP, environ 2 min de calcul, 0 $ pour le montage lui-même.
+Résultat : `output/<serie>_ep<NN>_brut.mp4`. Épisode 1 : 1080×1920, 30 i/s, 48,90 s, -14,4 LUFS, crête -1,4 dBTP, environ 2 min de calcul, 0 $ pour le montage lui-même.
 
-Prérequis : Python et `.venv` activé, `pip install -r requirements.txt` (mutagen, pillow, google-genai), ffmpeg 9.0.2 installé (`winget install Gyan.FFmpeg`, PATH rechargé), polices dans `assets/fonts/`.
+Prérequis : Python et `.venv` activé, `pip install -r requirements.txt` (mutagen, pillow, google-genai), ffmpeg 9.0.2 (`winget install Gyan.FFmpeg`, PATH rechargé), polices dans `assets/fonts/`.
 
 ## Le contrat : `episode.json`
-Dossier d'un épisode : `series/<nom>/episodes/epXX/` avec `episode.json`, `images/planXX.jpg`, `audio/voixXX.mp3`, et `animations/planXX.mp4` (facultatif, hors git).
+Dossier d'un épisode : `series/<nom>/episodes/epXX/`, avec `episode.json`, `images/planXX.jpg`, `audio/voixXX.mp3` et `animations/planXX.mp4` (facultatif, hors git).
 
 Champs d'un plan (`shots`) :
 - `id`, `image`, `voice`, `voice_text` ; `extra_hold` (pause en secondes après la voix) ; `duration` (plan sans voix).
-- `camera` : `zoom` [début, fin] (limite 1,3×) et `center` [[x, y] de départ, [x, y] d'arrivée] en fractions de l'image.
+- `camera` : `zoom` [début, fin] (limite 1,3×) et `center` [[x, y] de départ, [x, y] d'arrivée], en fractions de l'image.
 - `overlays` : liste de textes. Champs : `style` (`counter_small`, `counter_big`, `goal_big`, `letter`, `message_card`, `to_be_continued`), `text`, `label` (libellé du compteur : ARGENT, OBJECTIF), `sender` (carte de message), `space` (`screen` fixe à l'écran, `image` collé à l'image), `box` [x0, y0, x1, y1] en fractions, `start` et `fade_in` en secondes depuis le début du plan, `animation` (`slide_down`).
 - `shake` : `start`, `duration` (tremblement de caméra d'un plan fixe).
-- `animation` : `prompt` (mouvement seulement), `resolution`.
+- `animation` : `prompt` (le mouvement seulement), `resolution`.
 - `grade` : `false` (aucune correction) ou `{"blue": 0.85, "gamma": 0.9}` (valeurs imposées).
 
 Règles :
 - Durée d'un plan avec voix = 0,10 s d'avance + voix + 0,25 s de marge + `extra_hold`. Aucune durée n'est écrite dans le JSON : le monteur les calcule à partir des mp3 (`mutagen`).
-- Coupes franches, durées additionnées. Durée arrondie à l'image près (30 i/s) ; `assemble.py` lit la durée réelle de chaque clip.
+- Coupes franches, durées additionnées, arrondies à l'image près (30 i/s). `assemble.py` lit la durée réelle de chaque clip.
 - Les textes ne sont jamais générés dans les images. Les images sont générées avec des zones vides pour eux.
 - Un plan animé ne peut pas porter un texte `space: image` (il ne pourrait pas suivre la caméra) : le code refuse.
 
@@ -35,9 +35,9 @@ Règles :
 |---|---|
 | `episode.py` | Lit `episode.json`, vérifie les fichiers, calcule les durées |
 | `clip.py` | Un plan = un clip : zoom, panoramique, tremblement, surimpressions, ou source animée |
-| `surimpression.py` | Dessine les textes avec Pillow ; aperçus fixes |
+| `surimpression.py` | Dessine les textes avec Pillow, produit des aperçus fixes |
 | `etalonnage.py` | Étalonnage automatique de l'image source (dominante bleue, ombres) |
-| `animation.py` | Anime un plan fixe (image -> vidéo) ; estimation du coût, cache, journal `output/couts.csv` |
+| `animation.py` | Anime un plan fixe (image vers vidéo), estime le coût, garde un cache et un journal (`output/couts.csv`) |
 | `assemble.py` | Colle les clips, construit la piste audio calée, normalise le volume, fusionne |
 | `montage.py` | Enchaîne tout |
 | `outils/ajouter_libelles.py`, `outils/ajouter_animations.py` | Outils à usage unique qui modifient `episode.json` (sauvegarde `.bak`) |
@@ -49,10 +49,10 @@ Les imports entre modules sont des imports « frères » : on lance chaque fichi
 |---|---|
 | Monter l'épisode complet | `python src\meddah\production\montage.py` |
 | Régénérer un ou plusieurs clips | `python src\meddah\production\clip.py 1 3 4` |
-| Aperçus fixes des textes | `python src\meddah\production\surimpression.py [plans]` → `output\apercus\` |
-| Mesures et comparaisons d'étalonnage | `python src\meddah\production\etalonnage.py` → `output\etalonnage\` |
-| Estimer le coût d'animation (sans dépenser) | `python src\meddah\production\animation.py --estimer` |
-| Générer des animations | `python src\meddah\production\animation.py 1 4 10` (confirmation) ; `--forcer` regénère et repaie ; `--oui` sans confirmation |
+| Aperçus fixes des textes | `python src\meddah\production\surimpression.py [plans]` (résultat dans `output\apercus\`) |
+| Mesures et comparaisons d'étalonnage | `python src\meddah\production\etalonnage.py` (résultat dans `output\etalonnage\`) |
+| Estimer le coût d'animation, sans dépenser | `python src\meddah\production\animation.py --estimer` |
+| Générer des animations | `python src\meddah\production\animation.py 1 4 10` (demande confirmation ; `--forcer` regénère et repaie ; `--oui` supprime la confirmation) |
 | Assembler seulement | `python src\meddah\production\assemble.py` |
 
 ## Réglages (constantes en tête de fichier)
@@ -65,28 +65,28 @@ Les imports entre modules sont des imports « frères » : on lance chaque fichi
 ## Chaîne technique
 1. Étalonnage : Pillow mesure l'image source ; si elle est trop bleue ou trop sombre, une copie corrigée est enregistrée dans `output/tmp/` (l'originale n'est jamais modifiée).
 2. Plan fixe : recadrage « cover » 9:16, agrandissement ×4, `zoompan` (le centre demandé est borné pour ne jamais sortir de l'image), conversion des couleurs (JPEG plein BT.601 vers vidéo limité BT.709 avec `zscale`).
-3. Plan animé : la vidéo source est recadrée, passée de 24 à 30 i/s, sa dernière image est figée si elle est plus courte que le plan.
-4. Surimpressions : chaque texte est dessiné en PNG par Pillow ; fondu sur la transparence ; un texte `screen` est superposé, un texte `image` traverse la même chaîne de caméra que l'image.
-5. Assemblage : concaténation des clips sans ré-encodage ; piste audio construite par segments de la durée exacte de chaque clip ; normalisation du volume en deux passes (`loudnorm`) ; fusion avec `faststart`.
+3. Plan animé : la vidéo source est recadrée, passée de 24 à 30 i/s, et sa dernière image est figée si elle est plus courte que le plan.
+4. Surimpressions : chaque texte est dessiné en PNG par Pillow, avec un fondu sur la transparence. Un texte `screen` est superposé tel quel, un texte `image` traverse la même chaîne de caméra que l'image.
+5. Assemblage : concaténation des clips sans ré-encodage, piste audio construite par segments de la durée exacte de chaque clip, normalisation du volume en deux passes (`loudnorm`), fusion avec `faststart`.
 
 ## Animation : état, coûts, risques
-- Modèle accessible avec ce compte : `gemini-omni-flash-preview` (720p uniquement, 10 s maximum). Les noms de la documentation (`gemini-omni-1.2-flash`, `gemini-omni-1.1-flash`) ont répondu 404. Les requêtes en erreur 404 ne sont pas facturées.
-- Requête : `response_format` avec `type: video`, `aspect_ratio: 9:16`, `resolution`, et `duration` sous forme de **chaîne** (`"4s"`, pas un entier). Le prompt commence par `<FIRST_FRAME>` pour partir de l'image du plan. L'image envoyée est l'image étalonnée.
-- Plans animés de l'épisode 1 : 1, 2, 3, 4, 5, 7, 8, 9, 10. Le plan 6 reste fixe (la lettre doit suivre le papier). Les plans 2 et 3, avec un personnage de 11 ans, ont été acceptés depuis la France.
+- Modèle accessible avec ce compte : `gemini-omni-flash-preview` (720p uniquement, 10 s maximum). Les noms de la documentation (`gemini-omni-1.2-flash`, `gemini-omni-1.1-flash`) ont répondu 404. Les requêtes en 404 ne sont pas facturées.
+- Requête : `response_format` avec `type: video`, `aspect_ratio: 9:16`, `resolution` et `duration` sous forme de chaîne (`"4s"`, pas un entier). Le prompt commence par `<FIRST_FRAME>` pour partir de l'image du plan. L'image envoyée est l'image étalonnée.
+- Plans animés de l'épisode 1 : 1, 2, 3, 4, 5, 7, 8, 9, 10. Le plan 6 reste fixe, car la lettre doit suivre le papier. Les plans 2 et 3, avec un personnage de 11 ans, ont été acceptés depuis la France.
 - Coût : 10 générations notées (plan 3 deux fois), 53 s au total, estimées à 5,30 $ avec un tarif supposé de 0,10 $/s. Le solde du compte (5,00 € rechargés, 3,59 € restants) suggère une consommation réelle nettement plus basse, à confirmer. Un épisode complet animé (47 s) : environ 1,40 $ si le coût réel est de 0,03 $/s, environ 4,70 $ au tarif supposé.
-- Risque : un guide de migration (source secondaire) annonçait le retrait de ce modèle préliminaire au 30 septembre 2026 ; il répond toujours. Les animations sont sauvegardées hors du dépôt.
-- Retour d'usage : le hook (plan 1) et le cliffhanger (plan 10) animés rendent bien ; les prompts doivent demander une « caméra quasi fixe » (sinon le modèle zoome de 1,5× et le texte du haut finit sur la tête).
+- Risque : un guide de migration (source secondaire) annonçait le retrait de ce modèle préliminaire au 30 septembre 2026. Il répond toujours. Les animations sont sauvegardées hors du dépôt.
+- Les prompts doivent demander une caméra quasi fixe : sinon le modèle zoome de 1,5× et le texte du haut finit sur la tête. Le hook (plan 1) et le cliffhanger (plan 10) animés rendent bien.
 
-## Pièges rencontrés (et solutions)
-- Chemin réel : `series/<nom>/episodes/epXX/`. Les images mesurent 1536×2752 (pas 1438×2576). Le code ne suppose aucune taille.
-- ffmpeg : installé par winget mais non reconnu tant que le PATH n'est pas rechargé ; fermer VS Code complètement.
-- Accents cassés (`Ã©`) dans le terminal : artefact d'affichage de `Get-Content` (lecture en ANSI). Les fichiers sont en UTF-8 ; vérifier dans VS Code.
-- Le filtre `scale` ne change pas la matrice de couleur d'un YUV vers un autre ; utiliser `zscale` (écart moyen mesuré : 1,1 contre 2,3 niveaux).
-- Vidéo sans aucun texte : cause probable, ancien `clip.py` encore en place ou fichier non sauvegardé. Toujours sauvegarder dans VS Code puis relancer `montage.py`.
-- `ModuleNotFoundError` sur `episode` : `episode.py` absent du dossier du script ; les modules se lancent depuis leur dossier.
-- Polices : Montserrat (licence libre OFL, usage commercial permis), fichiers statiques du dépôt officiel JulietaUla/Montserrat ; garder `OFL.txt`.
-- Les gros plans de mains dérivent vers une peau pâle ; les prompts d'images appliquent des règles (voir `series/enzo/episodes/ep01/serie_enzo_ep01.md`).
-- Piège de génération vidéo : un `duration` entier donne une erreur 400 ; des noms de modèles listés dans la documentation peuvent être indisponibles pour un compte (vérifier avec `client.models.list()`).
+## Pièges rencontrés
+- Problème : le chemin réel est `series/<nom>/episodes/epXX/` et les images mesurent 1536×2752, pas 1438×2576. Solution : le code ne suppose aucune taille.
+- Problème : ffmpeg est installé par winget mais le terminal ne le reconnaît pas. Solution : recharger le PATH, en fermant VS Code complètement.
+- Problème : accents cassés (`Ã©`) dans le terminal. Cause : `Get-Content` lit en ANSI. Les fichiers sont bien en UTF-8, à vérifier dans VS Code.
+- Problème : le filtre `scale` ne change pas la matrice de couleur d'un YUV vers un autre. Solution : `zscale` (écart moyen mesuré : 1,1 contre 2,3 niveaux).
+- Problème : vidéo sans aucun texte. Cause probable : ancien `clip.py` encore en place, ou fichier non sauvegardé. Solution : sauvegarder dans VS Code, puis relancer `montage.py`.
+- Problème : `ModuleNotFoundError` sur `episode`. Cause : `episode.py` absent du dossier du script. Solution : le remettre à côté des autres modules.
+- Problème : le dossier `static` de google/fonts n'existe pas pour Montserrat. Solution : prendre les fichiers statiques du dépôt officiel JulietaUla/Montserrat (licence OFL, usage commercial permis) et garder `OFL.txt`.
+- Problème : les gros plans de mains dérivent vers une peau pâle. Solution : règles dans les prompts d'images (voir `series/enzo/episodes/ep01/serie_enzo_ep01.md`).
+- Problème : un `duration` entier donne une erreur 400 côté API vidéo. Solution : une chaîne, `"4s"`. Des noms de modèles de la documentation peuvent aussi être indisponibles pour un compte : vérifier avec `client.models.list()`.
 
 ## Résultats de l'épisode 1 (référence)
 - 10 plans, 48,90 s ; coupes à 3,83 / 9,43 / 15,33 / 19,67 / 22,83 / 29,23 / 35,30 / 40,47 / 45,90 s.

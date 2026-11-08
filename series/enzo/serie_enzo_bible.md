@@ -37,6 +37,7 @@ Réparation de téléphones, apprise auprès de Serge. Progression envisagée : 
 - Structure : hook dans les 3 premières secondes → rappel court de la situation → événement principal → rebondissement → cliffhanger.
 - 8 à 10 plans, format vertical 9:16.
 - Signature : compteur de patrimoine affiché à l'écran à chaque épisode.
+- Libellés du compteur : ARGENT (le compteur) et OBJECTIF (le but), toujours identiques d'un épisode à l'autre.
 - Fin : « À suivre ».
 
 ## Arc 1 (proposition)
