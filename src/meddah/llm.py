@@ -7,8 +7,9 @@ from typing import Any
 from datetime import date, datetime
 from pathlib import Path
 
+import httpx
 from google import genai
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 MODELE = "gemini-4-argon"
 NIVEAUX_REFLEXIONS = {
@@ -18,6 +19,9 @@ NIVEAUX_REFLEXIONS = {
 }
 NIVEAU_PAR_DEFAUT = "medium"
 MAX_TOKENS_SORTIE = 16384
+ESSAIS_MAX = 3
+CODES_REESSAYABLES = [408, 429, 500, 502, 503, 504]
+TIMEOUT_S = 600
 
 PRIX = {
     "gemini-4-argon": [
@@ -64,6 +68,42 @@ class Reponse:
             f"total={self.tokens_total} | cout={self.cout:.5f} $ "
             f"| {self.duree_s:.1f} s"
         )
+
+class ErreurLLM(Exception):
+    """Base de toutes les erreurs de llm.py : un agent n'attrape que celle-ci."""
+
+
+class ErreurAPI(ErreurLLM):
+    """L'appel a échoué (réseau, quota, serveur, modèle) malgré les essais.
+    Rien n'a été facturé, donc rien n'est journalisé."""
+
+
+class ErreurReponse(ErreurLLM):
+    """L'appel a abouti et a été facturé, mais la réponse est inutilisable.
+    L'objet Reponse (tokens, coût, texte brut) est joint pour l'agent."""
+
+    def __init__(self, message: str, reponse: Reponse) -> None:
+        super().__init__(message)
+        self.reponse = reponse
+
+
+class ErreurReponseVide(ErreurReponse):
+    """Le texte est None (réponse bloquée ou coupée)."""
+
+
+class ErreurSortieInvalide(ErreurReponse):
+    """Le texte ne respecte pas le schéma demandé (JSON tronqué, champ manquant)."""
+
+
+def _raison_arret(reponse: genai.types.GenerateContentResponse) -> str:
+    """Pourquoi le modèle s'est arrêté (STOP, MAX_TOKENS, SAFETY...), pour le diagnostic."""
+    candidats = reponse.candidates or []
+    if candidats and candidats[0].finish_reason is not None:
+        return candidats[0].finish_reason.name
+    retour = reponse.prompt_feedback
+    if retour is not None and retour.block_reason is not None:
+        return f"prompt bloqué ({retour.block_reason.name})"
+    return "inconnue"
 
 def tarif(modele: str, jour: date | None = None):
     jour = jour or date.today()
@@ -123,7 +163,16 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
             f"niveau doit être l'un de {sorted(NIVEAUX_REFLEXIONS)}, reçu {niveau!r}"
         )
 
-    client = genai.Client()
+    client = genai.Client(
+        http_options=genai.types.HttpOptions(
+            timeout=TIMEOUT_S * 1000,
+            retry_options=genai.types.HttpRetryOptions(
+                attempts=ESSAIS_MAX,
+                initial_delay=1.0,
+                http_status_codes=CODES_REESSAYABLES,
+            ),
+        ),
+    )
 
     config = genai.types.GenerateContentConfig(
         system_instruction=system_prompt,
@@ -136,11 +185,14 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
     )
 
     debut = time.perf_counter()
-    reponse = client.models.generate_content(
-        model=MODELE,
-        contents=prompt,
-        config=config
-    )
+    try:
+        reponse = client.models.generate_content(
+            model=MODELE,
+            contents=prompt,
+            config=config,
+        )
+    except (genai.errors.APIError, httpx.TransportError) as erreur:
+        raise ErreurAPI(f"appel à {MODELE} échoué : {erreur}") from erreur
     duree = time.perf_counter() - debut
 
     usage = reponse.usage_metadata
@@ -165,8 +217,21 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
     except OSError as erreur:
         warnings.warn(f"Journal des coûts non écrit ({erreur}).")
 
-    if schema is not None and resultat.texte is not None:
-        donnees = schema.model_validate_json(resultat.texte)
+    if resultat.texte is None:
+        raise ErreurReponseVide(
+            f"réponse vide (raison d'arrêt : {_raison_arret(reponse)})",
+            resultat,
+        )
+
+    if schema is not None:
+        try:
+            donnees = schema.model_validate_json(resultat.texte)
+        except ValidationError as erreur:
+            raise ErreurSortieInvalide(
+                f"JSON non conforme au schéma {schema.__name__} "
+                f"(raison d'arrêt : {_raison_arret(reponse)}) : {erreur}",
+                resultat,
+            ) from erreur
         resultat = replace(resultat, donnees=donnees)
 
     return resultat
@@ -178,6 +243,7 @@ if __name__ == "__main__":
     class Accroche(BaseModel):
         """Schéma de test. Le vrai schéma d'episode.json viendra avec le scénariste."""
 
+        # Les descriptions sont envoyées au modèle : un mini-prompt par champ.
         voix_off: str = Field(
             description="Une seule phrase de voix off, à la première personne."
         )
@@ -191,24 +257,53 @@ if __name__ == "__main__":
         "légaux. Ton réaliste, voix off à la première personne, jamais de "
         "discours « deviens riche vite »."
     )
+    PROMPT_TEST = "Écris l'accroche de l'épisode 2. Le compteur de départ est de 37 euros."
 
+    # Test 0 (gratuit) : un JSON incomplet est refusé, sans appel réseau.
     try:
         Accroche.model_validate_json('{"voix_off": "il manque le compteur"}')
-    except ValueError as erreur:
+    except ValidationError as erreur:
         print("JSON incomplet refusé :", type(erreur).__name__)
 
+    # Test 1 (gratuit) : un modèle qui n'existe pas -> erreur 404, jamais rejouée.
+    modele_reel = MODELE
+    MODELE = "gemini-4-argon-inexistant"
+    try:
+        appeler("test", agent="test_llm")
+    except ErreurAPI as erreur:
+        print("ErreurAPI :", erreur)
+    MODELE = modele_reel
+
+    # Test 2 : réponse coupée (plafond de 20 tokens). L'appel est payé et
+    # journalisé, mais on obtient une erreur claire, pas du texte tronqué.
+    plafond_reel = MAX_TOKENS_SORTIE
+    MAX_TOKENS_SORTIE = 20
+    try:
+        appeler(
+            PROMPT_TEST,
+            system_prompt=SYSTEM_PROMPT_TEST,
+            niveau="low",
+            agent="test_llm",
+            schema=Accroche,
+        )
+    except ErreurReponse as erreur:
+        print(type(erreur).__name__, ":", erreur)
+        print(erreur.reponse.resume())
+    MAX_TOKENS_SORTIE = plafond_reel
+
+    # Test 3 : un appel normal avec schéma (le test de l'étape 6).
     r = appeler(
-        "Écris l'accroche de l'épisode 2. Le compteur de départ est de 37 euros.",
+        PROMPT_TEST,
         system_prompt=SYSTEM_PROMPT_TEST,
         niveau="low",
         agent="test_llm",
         schema=Accroche,
     )
-    print(r.texte)           
-    print(type(r.donnees)) 
+    print(r.texte)           # le JSON brut renvoyé par le modèle
+    print(type(r.donnees))   # une instance d'Accroche : un objet, plus du texte
     print(r.donnees.voix_off)
     print(r.resume())
 
+    # Vérification en code : le schéma garantit le type, pas le sens.
     print("Compteur OK" if r.donnees.compteur_depart == 37 else "Compteur FAUX")
     print(f"Coût cumulé du journal : {cout_total():.5f} $")
-
