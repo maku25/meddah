@@ -1,6 +1,9 @@
-from datetime import date
-from dataclasses import dataclass
+import csv
 import time
+import warnings
+from dataclasses import dataclass
+from datetime import date, datetime
+from pathlib import Path
 
 from google import genai
 
@@ -19,6 +22,21 @@ PRIX = {
         (date.max, 4.00, 20.00),
     ],
 }
+
+RACINE = Path(__file__).resolve().parents[2]
+JOURNAL = RACINE / "output" / "couts_llm.csv"
+
+COLONNES = [
+    "horodatage",
+    "agent",
+    "modele",
+    "niveau",
+    "tokens_entree",
+    "tokens_sortie",
+    "tokens_reflexion",
+    "cout_usd",
+    "duree_s",
+]
 
 @dataclass(frozen=True)
 class Reponse:
@@ -64,7 +82,36 @@ def calculer_cout(
         + (tokens_sortie + tokens_reflexion) * prix_sortie
     ) / 1_000_000
 
-def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_PAR_DEFAUT):
+def journaliser(reponse: Reponse, agent: str, chemin: Path = JOURNAL) -> None:
+    """Ajoute une ligne au journal des coûts (crée le fichier si besoin)."""
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    # L'en-tête n'est écrit que si le fichier n'existe pas ou est vide.
+    nouveau = not chemin.exists() or chemin.stat().st_size == 0
+    with chemin.open("a", newline="", encoding="utf-8") as f:
+        ecrivain = csv.DictWriter(f, fieldnames=COLONNES)
+        if nouveau:
+            ecrivain.writeheader()
+        ecrivain.writerow({
+            "horodatage": datetime.now().astimezone().isoformat(timespec="seconds"),
+            "agent": agent,
+            "modele": reponse.modele,
+            "niveau": reponse.niveau,
+            "tokens_entree": reponse.tokens_entree,
+            "tokens_sortie": reponse.tokens_sortie,
+            "tokens_reflexion": reponse.tokens_reflexion,
+            "cout_usd": f"{reponse.cout:.6f}",
+            "duree_s": f"{reponse.duree_s:.2f}",
+        })
+
+
+def cout_total(chemin: Path = JOURNAL) -> float:
+    """Somme des coûts du journal, en dollars (0.0 s'il n'existe pas encore)."""
+    if not chemin.exists():
+        return 0.0
+    with chemin.open(newline="", encoding="utf-8") as f:
+        return sum(float(ligne["cout_usd"]) for ligne in csv.DictReader(f))
+
+def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_PAR_DEFAUT, agent: str = "inconnu"):
 
 
     if niveau not in NIVEAUX_REFLEXIONS:
@@ -94,7 +141,7 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
     tokens_sortie = (usage.candidates_token_count or 0) if usage else 0
     tokens_reflexion = (usage.thoughts_token_count or 0) if usage else 0
 
-    return Reponse(
+    resultat = Reponse(
         texte=reponse.text,
         modele=MODELE,
         niveau=niveau,
@@ -104,6 +151,13 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
         cout=calculer_cout(tokens_entree, tokens_sortie, tokens_reflexion),
         duree_s=duree,
     )
+
+    try:
+        journaliser(resultat, agent)
+    except OSError as erreur:
+        warnings.warn(f"Journal des coûts non écrit ({erreur}).")
+
+    return resultat
 
 
 if __name__ == "__main__":
@@ -116,12 +170,15 @@ if __name__ == "__main__":
 
     PROMPT_TEST = "Écris en une phrase l'accroche de l'épisode 2."
 
-    r = appeler(PROMPT_TEST, niveau="low")
+    r = appeler(PROMPT_TEST, niveau="low", agent="test_llm")
     print(r.texte)
     print(r.resume())
     print()
 
-    r = appeler(PROMPT_TEST, system_prompt=SYSTEM_PROMPT_TEST, niveau="low")
+    r = appeler(PROMPT_TEST, system_prompt=SYSTEM_PROMPT_TEST, niveau="low", agent="test_llm")
     print(r.texte)
     print(r.resume())
+
+    print(f"Journal : {JOURNAL}")
+    print(f"Coût cumulé du journal : {cout_total():.5f} $")
 
