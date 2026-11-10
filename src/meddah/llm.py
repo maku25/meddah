@@ -1,11 +1,14 @@
 import csv
 import time
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Any
+
 from datetime import date, datetime
 from pathlib import Path
 
 from google import genai
+from pydantic import BaseModel, Field
 
 MODELE = "gemini-4-argon"
 NIVEAUX_REFLEXIONS = {
@@ -48,6 +51,7 @@ class Reponse:
     tokens_reflexion: int
     cout: float
     duree_s: float
+    donnees: Any = None
 
     @property
     def tokens_total(self) -> int:
@@ -111,7 +115,7 @@ def cout_total(chemin: Path = JOURNAL) -> float:
     with chemin.open(newline="", encoding="utf-8") as f:
         return sum(float(ligne["cout_usd"]) for ligne in csv.DictReader(f))
 
-def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_PAR_DEFAUT, agent: str = "inconnu"):
+def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_PAR_DEFAUT, agent: str = "inconnu", schema: type[BaseModel] | None = None) -> Reponse:
 
 
     if niveau not in NIVEAUX_REFLEXIONS:
@@ -124,7 +128,11 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
     config = genai.types.GenerateContentConfig(
         system_instruction=system_prompt,
         max_output_tokens=MAX_TOKENS_SORTIE,
-        thinking_config=genai.types.ThinkingConfig(thinking_level=NIVEAUX_REFLEXIONS[niveau])
+        thinking_config=genai.types.ThinkingConfig(
+            thinking_level=NIVEAUX_REFLEXIONS[niveau],
+        ),
+        response_mime_type="application/json" if schema is not None else None,
+        response_schema=schema,
     )
 
     debut = time.perf_counter()
@@ -157,10 +165,26 @@ def appeler(prompt: str, system_prompt: str | None = None, niveau: str = NIVEAU_
     except OSError as erreur:
         warnings.warn(f"Journal des coûts non écrit ({erreur}).")
 
+    if schema is not None and resultat.texte is not None:
+        donnees = schema.model_validate_json(resultat.texte)
+        resultat = replace(resultat, donnees=donnees)
+
     return resultat
 
 
 if __name__ == "__main__":
+    # Test manuel : python src\meddah\llm.py
+
+    class Accroche(BaseModel):
+        """Schéma de test. Le vrai schéma d'episode.json viendra avec le scénariste."""
+
+        voix_off: str = Field(
+            description="Une seule phrase de voix off, à la première personne."
+        )
+        compteur_depart: int = Field(
+            description="Montant du compteur au début de l'épisode, en euros."
+        )
+
     SYSTEM_PROMPT_TEST = (
         "Tu es le scénariste de la série Enzo, l'histoire d'un jeune de 18 ans "
         "qui doit réunir 3 400 euros en trois mois, uniquement par des moyens "
@@ -168,17 +192,23 @@ if __name__ == "__main__":
         "discours « deviens riche vite »."
     )
 
-    PROMPT_TEST = "Écris en une phrase l'accroche de l'épisode 2."
+    try:
+        Accroche.model_validate_json('{"voix_off": "il manque le compteur"}')
+    except ValueError as erreur:
+        print("JSON incomplet refusé :", type(erreur).__name__)
 
-    r = appeler(PROMPT_TEST, niveau="low", agent="test_llm")
-    print(r.texte)
+    r = appeler(
+        "Écris l'accroche de l'épisode 2. Le compteur de départ est de 37 euros.",
+        system_prompt=SYSTEM_PROMPT_TEST,
+        niveau="low",
+        agent="test_llm",
+        schema=Accroche,
+    )
+    print(r.texte)           
+    print(type(r.donnees)) 
+    print(r.donnees.voix_off)
     print(r.resume())
-    print()
 
-    r = appeler(PROMPT_TEST, system_prompt=SYSTEM_PROMPT_TEST, niveau="low", agent="test_llm")
-    print(r.texte)
-    print(r.resume())
-
-    print(f"Journal : {JOURNAL}")
+    print("Compteur OK" if r.donnees.compteur_depart == 37 else "Compteur FAUX")
     print(f"Coût cumulé du journal : {cout_total():.5f} $")
 
